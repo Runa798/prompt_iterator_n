@@ -735,9 +735,9 @@ export default function Home() {
                     )}
 
                     <div
-                      className={`rounded-2xl px-5 py-3 max-w-[85%] shadow-sm ${m.role === 'user'
-                        ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                        : 'bg-card text-card-foreground border rounded-tl-sm'
+                      className={`rounded-2xl px-5 py-3 shadow-sm ${m.role === 'user'
+                        ? 'bg-primary text-primary-foreground rounded-tr-sm max-w-[85%]'
+                        : 'bg-card text-card-foreground border rounded-tl-sm max-w-[95%]'
                         }`}
                     >
                       {/* 只在有内容且不是纯工具调用时显示文本 */}

@@ -177,21 +177,21 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                                 </>
                             ) : (
                                 <>
-                                    <div className="flex flex-col gap-1 overflow-hidden flex-1 min-w-0">
-                                        <span className="font-medium text-sm truncate pr-12">
+                                    <div className="flex flex-col gap-1 flex-1 min-w-0 pr-2">
+                                        <span className="font-medium text-sm break-words line-clamp-2">
                                             {session.title || '未命名对话'}
                                         </span>
-                                        <span className="text-xs text-muted-foreground truncate pr-12">
+                                        <span className="text-xs text-muted-foreground truncate">
                                             {formatDistanceToNow(session.updatedAt, { addSuffix: true, locale: zhCN })}
                                         </span>
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-all shrink-0"
+                                        className="opacity-0 group-hover:opacity-100 h-7 w-7 hover:bg-destructive/10 hover:text-destructive transition-all shrink-0 self-start mt-0.5"
                                         onClick={(e) => handleDelete(e, session.id!)}
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
                                 </>
                             )}
