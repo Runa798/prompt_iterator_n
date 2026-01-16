@@ -56,6 +56,3 @@ export class PromptIteratorDB extends Dexie {
 }
 
 export const db = new PromptIteratorDB();
-
-// 显式重新导出类型，确保 TypeScript 编译器能正确识别
-export type { ChatSession, ChatMessage, FavoritePrompt };
