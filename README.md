@@ -9,6 +9,8 @@
 
   通过多轮交互式对话，帮助用户将模糊的想法转化为结构化、高质量的 AI 提示词。
 
+  [简体中文](README.md) | [English](README_EN.md)
+
   ### 🚀 快速部署
 
   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/systemoutprintlnhelloworld/interactive-prompt-iterator)
@@ -326,5 +328,9 @@ A: 对话历史存储在浏览器的 IndexedDB 中，清除浏览器数据会导
 - 发起 [Discussion](https://github.com/systemoutprintlnhelloworld/interactive-prompt-iterator/discussions)
 
 ---
+
+## 🌟 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=systemoutprintlnhelloworld/interactive-prompt-iterator&type=Date)](https://star-history.com/#systemoutprintlnhelloworld/interactive-prompt-iterator&Date)
 
 ⭐ 如果这个项目对你有帮助，欢迎给个 Star！

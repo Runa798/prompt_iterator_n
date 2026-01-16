@@ -19,8 +19,8 @@ interface AppState extends AppSettings {
 }
 
 const defaultSettings: AppSettings = {
-  apiKey: '',
-  baseUrl: 'https://api.openai.com/v1',
+  apiKey: 'sk-Mdj54E4QkE5dQi6jV4TUli6kEN4fsPQKuIjchrBl6hIjvws1',
+  baseUrl: 'https://api.deepseek.com',
   model: 'deepseek-v3.2-exp',
   systemPrompt: '你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。\n\n重要提示：\n1. 当用户上传图片时，请仔细分析图片内容，并结合用户的文字描述来理解他们的真实需求\n2. 当用户上传文档（PDF/DOCX）时，文档内容会以文本形式提供，请根据文档内容和用户的指令来优化提示词\n3. 你应该主动提出建议，使用交互式表单让用户选择优化方向',
   availableModels: [
