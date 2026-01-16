@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, RefreshCw, Sparkles, Send, Maximize2, X } from 'lucide-react'
+import { Copy, Check, RefreshCw, Sparkles, Send, Maximize2, X, Star } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { db } from '@/lib/db'
+import { toast } from 'sonner'
 
 interface PromptProposal {
     title: string
@@ -32,6 +34,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
     const [copied, setCopied] = useState(false)
     const [accepted, setAccepted] = useState(false)
     const [isFullscreen, setIsFullscreen] = useState(false)
+    const [favorited, setFavorited] = useState(false)
 
     // Parse args safely
     let proposal: PromptProposal | null = null
@@ -69,6 +72,22 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
         // Technically this should trigger a user message?
         // Or we just send a result saying "I want changes"?
         // For now, let's just make it a visual action that tells user to type.
+    }
+
+    const handleFavorite = async () => {
+        const finalPrompt = proposal?.finalPrompt || proposal?.final_prompt || ''
+        const title = proposal?.title || '未命名提示词'
+
+        await db.favoritePrompts.add({
+            title,
+            content: finalPrompt,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        })
+
+        setFavorited(true)
+        toast.success('已添加到收藏')
+        setTimeout(() => setFavorited(false), 2000)
     }
 
     if (accepted || 'result' in toolInvocation) {
@@ -134,6 +153,15 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                                     <Button
                                         size="icon"
                                         variant="secondary"
+                                        className="h-8 w-8 opacity-80 hover:opacity-100 transition-all"
+                                        onClick={handleFavorite}
+                                        title="收藏提示词"
+                                    >
+                                        <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-yellow-500 text-yellow-500 scale-110 rotate-12' : ''}`} />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        variant="secondary"
                                         className="h-8 w-8 opacity-80 hover:opacity-100"
                                         onClick={() => setIsFullscreen(true)}
                                     >
@@ -152,7 +180,20 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="structure" className="m-0 p-6 space-y-4">
+                    <TabsContent value="structure" className="m-0 p-6 space-y-4 relative">
+                        {/* 收藏按钮 - 右上角 */}
+                        <div className="absolute top-4 right-4 z-10">
+                            <Button
+                                size="icon"
+                                variant="secondary"
+                                className="h-8 w-8 opacity-80 hover:opacity-100 transition-all"
+                                onClick={handleFavorite}
+                                title="收藏提示词"
+                            >
+                                <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-yellow-500 text-yellow-500 scale-110' : ''}`} />
+                            </Button>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-xs font-semibold uppercase text-muted-foreground">Role (角色)</Label>

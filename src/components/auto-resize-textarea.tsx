@@ -15,6 +15,7 @@ interface AutoResizeTextareaProps {
   value: string
   onChange: (value: string) => void
   onPaste?: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void
+  onSubmit?: () => void
   placeholder?: string
   disabled?: boolean
   autoFocus?: boolean
@@ -25,6 +26,7 @@ export function AutoResizeTextarea({
   value,
   onChange,
   onPaste,
+  onSubmit,
   placeholder,
   disabled,
   autoFocus,
@@ -33,6 +35,22 @@ export function AutoResizeTextarea({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isExpanded, setIsExpanded] = useState(false)
   const [showExpandButton, setShowExpandButton] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // 处理键盘事件：回车发送，Shift+回车换行
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (onSubmit && value.trim()) {
+        onSubmit()
+      }
+    }
+  }
+
+  // 确保组件已挂载，避免 hydration 错误
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // 自动调整高度
   useEffect(() => {
@@ -46,14 +64,21 @@ export function AutoResizeTextarea({
     const maxHeight = Math.max(window.innerHeight / 4, 150)
     const scrollHeight = textarea.scrollHeight
 
+    // 设置实际高度
     if (scrollHeight > maxHeight) {
       textarea.style.height = `${maxHeight}px`
-      setShowExpandButton(true)
     } else {
       textarea.style.height = `${scrollHeight}px`
-      setShowExpandButton(false)
     }
-  }, [value])
+
+    // 只在客户端挂载后才更新展开按钮状态
+    if (isMounted) {
+      // 计算单行高度：minHeight(50px) + padding(上下各3px) = 56px
+      const singleLineHeight = 56
+      const hasMultipleLines = value.includes('\n') || scrollHeight > singleLineHeight
+      setShowExpandButton(hasMultipleLines)
+    }
+  }, [value, isMounted])
 
   return (
     <>
@@ -62,6 +87,7 @@ export function AutoResizeTextarea({
           ref={textareaRef}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           onPaste={onPaste}
           placeholder={placeholder}
           disabled={disabled}
@@ -93,23 +119,28 @@ export function AutoResizeTextarea({
 
       {/* 放大对话框 */}
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>编辑输入内容</DialogTitle>
+        <DialogContent className="max-w-5xl w-[90vw] h-[90vh] flex flex-col p-0 border-4">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="text-lg font-semibold">Pasted content</DialogTitle>
+            <div className="text-xs text-muted-foreground mt-1">
+              {value.length} 字符 • {value.split('\n').length} 行
+            </div>
           </DialogHeader>
-          <Textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="flex-1 min-h-[500px] resize-none leading-relaxed"
-            autoFocus
-            style={{
-              lineHeight: '1.6',
-              wordBreak: 'break-word',
-              overflowWrap: 'anywhere',
-              whiteSpace: 'pre-wrap'
-            }}
-          />
+          <div className="flex-1 overflow-hidden px-6 py-4">
+            <Textarea
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className="w-full h-full resize-none leading-relaxed border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              autoFocus
+              style={{
+                lineHeight: '1.6',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere',
+                whiteSpace: 'pre-wrap'
+              }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </>

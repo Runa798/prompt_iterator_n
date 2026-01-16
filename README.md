@@ -74,6 +74,13 @@
 
 ## 📺 功能演示
 
+### 应用概览
+
+<div align="center">
+  <img src="overview.png" alt="应用概览" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" />
+  <p><em>交互式提示词迭代器 - 通过多维度选项引导，生成结构化 AI 提示词</em></p>
+</div>
+
 ### 1. 交互式提示词生成流程
 > **场景**: 从模糊需求到精准提示词
 >

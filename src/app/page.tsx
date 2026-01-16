@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles } from 'lucide-react'
+import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { ChatSidebar } from '@/components/chat-sidebar'
 import { db } from '@/lib/db'
@@ -21,6 +21,9 @@ import { PromptProposalCard } from '@/components/prompt-proposal-card'
 import { EnhancementForm } from '@/components/enhancement-form'
 import { FileUpload } from '@/components/file-upload'
 import { AutoResizeTextarea } from '@/components/auto-resize-textarea'
+import { FileAttachmentIcon } from '@/components/file-attachment-icon'
+import { FavoritesPage } from '@/components/favorites-page'
+import { SpotlightSearch } from '@/components/spotlight-search'
 
 export default function Home() {
   const { apiKey, baseUrl, model, availableModels, setModel } = useAppStore()
@@ -38,6 +41,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [isToolRendering, setIsToolRendering] = useState(false) // 工具渲染状态
   const abortControllerRef = useRef<AbortController | null>(null)
+  const [activeTab, setActiveTab] = useState<'chat' | 'favorites'>('chat') // 标签页状态
+  const [spotlightOpen, setSpotlightOpen] = useState(false) // Spotlight 搜索状态
 
   // 文件上传状态
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
@@ -59,6 +64,19 @@ export default function Home() {
         abortControllerRef.current.abort()
       }
     }
+  }, [])
+
+  // Ctrl+K 快捷键监听 - 打开 Spotlight 搜索
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setSpotlightOpen(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   // Auto scroll to bottom
@@ -600,6 +618,14 @@ export default function Home() {
     setIsLoading(false)
   }
 
+  // 处理表单提交（用于快捷键）
+  const handleSubmit = () => {
+    const form = document.querySelector('form') as HTMLFormElement
+    if (form) {
+      form.requestSubmit()
+    }
+  }
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
@@ -621,9 +647,6 @@ export default function Home() {
               <Code2 className="w-5 h-5 text-primary" />
             </div>
             <h1 className="text-xl font-bold tracking-tight">Prompt Iterator</h1>
-            <Badge variant="outline" className="ml-2 text-xs text-muted-foreground font-normal">
-              Beta
-            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <Select value={model} onValueChange={setModel}>
@@ -662,10 +685,41 @@ export default function Home() {
           </div>
         </header>
 
+        {/* 标签页切换 */}
+        <div className="border-b bg-background shrink-0">
+          <div className="max-w-3xl mx-auto px-4 sm:px-8">
+            <div className="flex gap-6 justify-center">
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`py-3 px-1 border-b-2 transition-all flex items-center gap-2 ${
+                  activeTab === 'chat'
+                    ? 'border-primary text-primary font-medium'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <MessageSquare className={`w-4 h-4 ${activeTab === 'chat' ? 'text-blue-500' : ''}`} />
+                对话
+              </button>
+              <button
+                onClick={() => setActiveTab('favorites')}
+                className={`py-3 px-1 border-b-2 transition-all flex items-center gap-2 ${
+                  activeTab === 'favorites'
+                    ? 'border-primary text-primary font-medium'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Star className={`w-4 h-4 ${activeTab === 'favorites' ? 'text-yellow-500 fill-yellow-500' : ''}`} />
+                收藏
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-6">
-            {messages.length === 0 ? (
+          {activeTab === 'chat' ? (
+            <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-6">
+              {messages.length === 0 ? (
               <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-10">
                 <div className="text-center space-y-4">
                   <h2 className="text-4xl font-extrabold tracking-tight lg:text-5xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent pb-2">
@@ -748,10 +802,31 @@ export default function Home() {
                     >
                       {/* 只在有内容且不是纯工具调用时显示文本 */}
                       {m.content && !m.content.includes('toolCallId') && !m.content.includes('toolName') && (
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
-                          {m.content}
+                        <div className="space-y-3">
+                          {/* 只显示用户输入的文本，不显示附件内容 */}
+                          {(() => {
+                            const content = m.content
+                            const attachmentIndex = content.indexOf('[附件内容]')
 
-                          {/* 文字生成期间的等待提示 - 当有内容但表单未生成时显示 */}
+                            if (attachmentIndex > 0) {
+                              // 有附件内容，只显示用户文本
+                              const userText = content.substring(0, attachmentIndex).trim()
+                              return (
+                                <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
+                                  {userText}
+                                </div>
+                              )
+                            } else {
+                              // 没有附件内容，正常显示
+                              return (
+                                <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
+                                  {content}
+                                </div>
+                              )
+                            }
+                          })()}
+
+                          {/* 文字生成期间的等待提示 */}
                           {m.role === 'assistant' && m.id === messages[messages.length - 1]?.id && isLoading && !m.toolInvocations && (
                             <div className="mt-3 flex items-center gap-2.5 text-xs text-muted-foreground bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
                               <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin drop-shadow-sm" style={{ animationDuration: '2s' }} />
@@ -761,15 +836,27 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* 文件预览 */}
-                      {m.file?.preview && (
+                      {/* 文件预览 - 只有图片才显示预览 */}
+                      {m.file?.preview && m.file.type.startsWith('image/') && (
                         <div className="mt-3">
                           <img src={m.file.preview} alt={m.file.name} className="max-w-sm rounded-lg border" />
                         </div>
                       )}
-                      {m.file && !m.file.preview && (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          📎 {m.file.name}
+                      {/* 非图片文件使用图标+文件名显示，hover显示内容 */}
+                      {m.file && !m.file.type.startsWith('image/') && (
+                        <div className="mt-2">
+                          <FileAttachmentIcon
+                            fileName={m.file.name}
+                            fileType={m.file.type}
+                            fileContent={(() => {
+                              const content = m.content
+                              const attachmentIndex = content?.indexOf('[附件内容]')
+                              if (attachmentIndex && attachmentIndex > 0) {
+                                return content.substring(attachmentIndex + '[附件内容]'.length).trim()
+                              }
+                              return undefined
+                            })()}
+                          />
                         </div>
                       )}
 
@@ -882,9 +969,13 @@ export default function Home() {
               </div>
             )}
           </div>
+          ) : (
+            <FavoritesPage />
+          )}
         </div>
 
-        {/* Floating Input Area */}
+        {/* Floating Input Area - 仅在对话标签页显示 */}
+        {activeTab === 'chat' && (
         <div className="p-4 bg-background border-t shrink-0">
           <div className="max-w-3xl mx-auto space-y-3">
             {/* 文件上传区域 */}
@@ -904,6 +995,7 @@ export default function Home() {
                 value={localInput}
                 onChange={setLocalInput}
                 onPaste={handlePaste}
+                onSubmit={handleSubmit}
                 placeholder="描述你的任务..."
                 disabled={isLoading}
                 autoFocus
@@ -933,7 +1025,19 @@ export default function Home() {
             </div>
           </div>
         </div>
+        )}
       </div>
+
+      {/* Spotlight 搜索 */}
+      <SpotlightSearch
+        open={spotlightOpen}
+        onOpenChange={setSpotlightOpen}
+        onSessionSelect={(id) => {
+          setSessionId(id)
+          setActiveTab('chat')
+        }}
+        onNavigateToFavorites={() => setActiveTab('favorites')}
+      />
     </div>
   )
 }
