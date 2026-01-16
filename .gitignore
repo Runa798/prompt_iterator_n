@@ -49,7 +49,13 @@ next-env.d.ts
 # Test files and screenshots
 test-*.js
 test-*.png
-screenshots/
+/screenshots/
+tests/screenshots/
+# 允许docs/screenshots中的演示文件
+!docs/screenshots/
+docs/screenshots/*
+!docs/screenshots/demo-*.gif
+!docs/screenshots/demo-*.webp
 *.log
 
 # Documentation (optional - remove if you want to commit these)

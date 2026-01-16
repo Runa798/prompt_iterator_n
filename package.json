@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "record-demo": "node scripts/record-demo.js"
+    "record-demo": "node scripts/record-demo.js",
+    "record-gif": "node scripts/record-gif-demo.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.9",

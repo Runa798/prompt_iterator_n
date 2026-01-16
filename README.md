@@ -61,7 +61,7 @@
 >
 > 演示：用户输入"帮我写一篇关于AI的文章" → AI提供多维度选项（角色、风格、深度、格式）→ 用户选择偏好 → 生成结构化提示词
 
-![交互式生成流程](docs/screenshots/demo-interactive-flow.webp)
+![交互式生成流程](docs/screenshots/demo-interactive-flow.gif)
 
 ### 2. 文件上传与解析
 > **场景**: 基于文档内容生成提示词
