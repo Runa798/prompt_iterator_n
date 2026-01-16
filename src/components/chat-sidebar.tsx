@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Plus, MessageSquare, Trash2, Menu, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
-import { db, type ChatSession } from '@/lib/db'
+import { db } from '@/lib/db'
+import type { ChatSession } from '@/lib/db'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -25,12 +26,35 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
     const [isResizing, setIsResizing] = useState(false)
     const [searchQuery, setSearchQuery] = useState('') // 搜索关键词
     const [filteredSessions, setFilteredSessions] = useState<ChatSession[]>([]) // 过滤后的会话
+    const scrollPositionRef = useRef<number>(0) // 保存滚动位置
+    const searchInputRef = useRef<HTMLInputElement>(null) // 搜索框引用
 
     const loadSessions = async () => {
+        // 保存当前滚动位置
+        const viewport = document.querySelector('[data-radix-scroll-area-viewport]')
+        if (viewport) {
+            scrollPositionRef.current = viewport.scrollTop
+        }
+
         const allSessions = await db.chatSessions.orderBy('updatedAt').reverse().toArray()
         setSessions(allSessions)
         setFilteredSessions(allSessions)
     }
+
+    // 恢复滚动位置 - 在 sessions 更新后执行
+    useEffect(() => {
+        if (scrollPositionRef.current > 0) {
+            // 使用双重 RAF 确保 DOM 完全渲染
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const viewport = document.querySelector('[data-radix-scroll-area-viewport]')
+                    if (viewport) {
+                        viewport.scrollTop = scrollPositionRef.current
+                    }
+                })
+            })
+        }
+    }, [sessions])
 
     // 搜索过滤
     useEffect(() => {
@@ -66,6 +90,25 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
         setIsCollapsed(newState)
         localStorage.setItem('sidebar-collapsed', String(newState))
     }
+
+    // 快捷键监听：Ctrl+K / Cmd+K 聚焦搜索框
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl+K (Windows/Linux) 或 Cmd+K (Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault()
+                searchInputRef.current?.focus()
+                // 如果侧边栏折叠，则展开
+                if (isCollapsed) {
+                    setIsCollapsed(false)
+                    localStorage.setItem('sidebar-collapsed', 'false')
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [isCollapsed])
 
     // 处理拖动调整宽度
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -173,7 +216,8 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                     <div className="relative group">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                         <Input
-                            placeholder="搜索对话..."
+                            ref={searchInputRef}
+                            placeholder="搜索对话... (Ctrl+K)"
                             className="pl-9 pr-9 h-10 text-sm rounded-lg border-muted-foreground/20 bg-muted/30 hover:bg-muted/50 focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
