@@ -8,17 +8,15 @@ import { toast } from 'sonner'
 
 interface FileUploadProps {
   onFileSelect: (file: File, preview?: string) => void
-  onFileRemove: () => void
-  currentFile: File | null
-  currentPreview?: string
+  onFileRemove: (index: number) => void
+  currentFiles: Array<{ file: File; preview?: string }>
   modelSupportsVision: boolean
 }
 
 export function FileUpload({
   onFileSelect,
   onFileRemove,
-  currentFile,
-  currentPreview,
+  currentFiles,
   modelSupportsVision
 }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -68,10 +66,18 @@ export function FileUpload({
   }, [])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = e.target.files
+    if (!files || files.length === 0) return
 
-    await processFile(file)
+    // 处理所有选中的文件
+    for (let i = 0; i < files.length; i++) {
+      await processFile(files[i])
+    }
+
+    // 重置 input 以允许重复选择同一文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const processFile = async (file: File) => {
@@ -124,9 +130,12 @@ export function FileUpload({
     setShowFullDropZone(false)
     dragCounterRef.current = 0
 
-    const file = e.dataTransfer.files?.[0]
-    if (file) {
-      await processFile(file)
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      // 处理所有拖拽的文件
+      for (let i = 0; i < files.length; i++) {
+        await processFile(files[i])
+      }
     }
   }
 
@@ -161,52 +170,60 @@ export function FileUpload({
       )}
 
       {/* 常规上传区域 */}
-      <div className="relative">
-      {currentFile ? (
-        <div className="flex items-center gap-2 p-2 bg-muted rounded-lg border">
-          {currentPreview ? (
-            <img src={currentPreview} alt="Preview" className="w-12 h-12 object-cover rounded" />
-          ) : (
-            <div className="w-12 h-12 bg-muted-foreground/10 rounded flex items-center justify-center">
-              <FileText className="w-6 h-6 text-muted-foreground" />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{currentFile.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {(currentFile.size / 1024).toFixed(1)} KB
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={onFileRemove}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      ) : (
+      <div className="relative flex items-center gap-2">
+        {/* 上传按钮 */}
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="h-10 w-10"
+          className="h-10 w-10 shrink-0"
           onClick={() => fileInputRef.current?.click()}
           title="上传文件"
         >
           <Upload className="w-4 h-4" />
         </Button>
-      )}
-      <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        accept="image/*,.pdf,.docx"
-        onChange={handleFileChange}
-      />
-    </div>
+
+        {/* 文件列表 */}
+        {currentFiles.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {currentFiles.map((item, index) => (
+              <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-lg border">
+                {item.preview ? (
+                  <img src={item.preview} alt="Preview" className="w-10 h-10 object-cover rounded" />
+                ) : (
+                  <div className="w-10 h-10 bg-muted-foreground/10 rounded flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 max-w-[120px]">
+                  <p className="text-xs font-medium truncate">{item.file.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {(item.file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0"
+                  onClick={() => onFileRemove(index)}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept="image/*,.pdf,.docx"
+          multiple
+          onChange={handleFileChange}
+        />
+      </div>
     </>
   )
 }

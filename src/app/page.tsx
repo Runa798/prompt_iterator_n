@@ -44,10 +44,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'chat' | 'favorites'>('chat') // 标签页状态
   const [spotlightOpen, setSpotlightOpen] = useState(false) // Spotlight 搜索状态
 
-  // 文件上传状态
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [filePreview, setFilePreview] = useState<string | undefined>(undefined)
-  const [fileText, setFileText] = useState<string | undefined>(undefined)
+  // 文件上传状态 - 支持多文件
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ file: File; preview?: string; text?: string }>>([])
 
   // 不再限制模型识图，统一允许上传并提醒用户
   const modelSupportsVision = true // 允许所有模型上传图片，由用户判断
@@ -133,35 +131,41 @@ export default function Home() {
       setSessionId(currentId)
     }
 
-    // 构建用户消息内容（包含文件）
+    // 构建用户消息内容（包含多个文件）
     let userContent = localInput
-    if (fileText) {
-      userContent = `${localInput}\n\n[附件内容]\n${fileText.substring(0, 5000)}`
-    } else if (filePreview) {
-      userContent = `${localInput}\n\n[已上传图片]`
+    if (uploadedFiles.length > 0) {
+      const fileContents = uploadedFiles.map((item, index) => {
+        if (item.text) {
+          return `[附件${index + 1}: ${item.file.name}]\n${item.text.substring(0, 3000)}`
+        } else if (item.preview) {
+          return `[图片${index + 1}: ${item.file.name}]`
+        }
+        return `[文件${index + 1}: ${item.file.name}]`
+      }).join('\n\n')
+      userContent = `${localInput}\n\n${fileContents}`
     }
 
     const userMessage = {
       id: Math.random().toString(),
       role: 'user',
       content: userContent,
-      file: uploadedFile ? {
-        name: uploadedFile.name,
-        type: uploadedFile.type,
-        preview: filePreview
-      } : undefined
+      files: uploadedFiles.length > 0 ? uploadedFiles.map(item => ({
+        name: item.file.name,
+        type: item.file.type,
+        preview: item.preview
+      })) : undefined
     }
 
     // 保存用户消息到数据库（包含文件信息和完整内容）
     await db.messages.add({
       sessionId: currentId,
       role: 'user',
-      content: userContent,  // 使用包含PDF文本的完整内容
-      file: uploadedFile ? {
-        name: uploadedFile.name,
-        type: uploadedFile.type,
-        preview: filePreview
-      } : undefined,
+      content: userContent,
+      files: uploadedFiles.length > 0 ? uploadedFiles.map(item => ({
+        name: item.file.name,
+        type: item.file.type,
+        preview: item.preview
+      })) : undefined,
       createdAt: new Date()
     })
 
@@ -171,9 +175,7 @@ export default function Home() {
     setIsLoading(true)
 
     // 清除文件状态
-    setUploadedFile(null)
-    setFilePreview(undefined)
-    setFileText(undefined)
+    setUploadedFiles([])
 
     // 重置 AI 内容累积器
     aiContentRef.current = ''
@@ -363,9 +365,7 @@ export default function Home() {
     setSessionId(null)
     setMessages([])
     setLocalInput('')
-    setUploadedFile(null)
-    setFilePreview(undefined)
-    setFileText(undefined)
+    setUploadedFiles([])
   }
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -398,8 +398,7 @@ export default function Home() {
   }
 
   const handleFileSelect = async (file: File, preview?: string) => {
-    setUploadedFile(file)
-    setFilePreview(preview)
+    let fileText: string | undefined = undefined
 
     // 如果是 PDF 文件，使用客户端解析
     if (file.type === 'application/pdf') {
@@ -429,7 +428,7 @@ export default function Home() {
           fullText += pageText + '\n'
         }
 
-        setFileText(fullText)
+        fileText = fullText
         toast.success(`PDF 已解析（${pdf.numPages} 页）`)
       } catch (error: any) {
         console.error('PDF 解析错误:', error)
@@ -446,7 +445,7 @@ export default function Home() {
         const mammoth = await import('mammoth')
 
         const result = await mammoth.extractRawText({ arrayBuffer })
-        setFileText(result.value)
+        fileText = result.value
         toast.success('DOCX 已解析')
       } catch (error: any) {
         console.error('DOCX 解析错误:', error)
@@ -457,19 +456,20 @@ export default function Home() {
     else if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
       try {
         const text = await file.text()
-        setFileText(text)
+        fileText = text
         toast.success('文本文件已读取')
       } catch (error: any) {
         console.error('文本文件读取错误:', error)
         toast.error(`文件读取失败: ${error.message || '未知错误'}`)
       }
     }
+
+    // 添加到文件列表
+    setUploadedFiles(prev => [...prev, { file, preview, text: fileText }])
   }
 
-  const handleFileRemove = () => {
-    setUploadedFile(null)
-    setFilePreview(undefined)
-    setFileText(undefined)
+  const handleFileRemove = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleCopy = (content: string) => {
@@ -836,27 +836,33 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* 文件预览 - 只有图片才显示预览 */}
-                      {m.file?.preview && m.file.type.startsWith('image/') && (
-                        <div className="mt-3">
-                          <img src={m.file.preview} alt={m.file.name} className="max-w-sm rounded-lg border" />
-                        </div>
-                      )}
-                      {/* 非图片文件使用图标+文件名显示，hover显示内容 */}
-                      {m.file && !m.file.type.startsWith('image/') && (
-                        <div className="mt-2">
-                          <FileAttachmentIcon
-                            fileName={m.file.name}
-                            fileType={m.file.type}
-                            fileContent={(() => {
-                              const content = m.content
-                              const attachmentIndex = content?.indexOf('[附件内容]')
-                              if (attachmentIndex && attachmentIndex > 0) {
-                                return content.substring(attachmentIndex + '[附件内容]'.length).trim()
-                              }
-                              return undefined
-                            })()}
-                          />
+                      {/* 多文件预览 */}
+                      {m.files && m.files.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {m.files.map((file: any, index: number) => (
+                            <div key={index}>
+                              {file.preview && file.type.startsWith('image/') ? (
+                                <img src={file.preview} alt={file.name} className="max-w-[200px] rounded-lg border" />
+                              ) : (
+                                <FileAttachmentIcon
+                                  fileName={file.name}
+                                  fileType={file.type}
+                                  fileContent={(() => {
+                                    const content = m.content
+                                    const attachmentMarker = `[附件${index + 1}: ${file.name}]`
+                                    const attachmentIndex = content?.indexOf(attachmentMarker)
+                                    if (attachmentIndex && attachmentIndex > 0) {
+                                      const startIndex = attachmentIndex + attachmentMarker.length
+                                      const nextMarker = content.indexOf('[附件', startIndex)
+                                      const endIndex = nextMarker > 0 ? nextMarker : content.length
+                                      return content.substring(startIndex, endIndex).trim()
+                                    }
+                                    return undefined
+                                  })()}
+                                />
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
 
@@ -989,8 +995,7 @@ export default function Home() {
                 <FileUpload
                   onFileSelect={handleFileSelect}
                   onFileRemove={handleFileRemove}
-                  currentFile={uploadedFile}
-                  currentPreview={filePreview}
+                  currentFiles={uploadedFiles}
                   modelSupportsVision={modelSupportsVision}
                 />
               </div>

@@ -19,12 +19,17 @@ export interface ChatMessage {
     toolInvocations?: any[];
     data?: any;
     annotations?: any[];
-    // 文件附件信息
+    // 文件附件信息 - 支持多文件
     file?: {
         name: string;
         type: string;
         preview?: string;
     };
+    files?: Array<{
+        name: string;
+        type: string;
+        preview?: string;
+    }>;
 }
 
 export interface FavoritePrompt {
