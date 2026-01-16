@@ -133,11 +133,11 @@ export default function Home() {
       } : undefined
     }
 
-    // 保存用户消息到数据库（包含文件信息）
+    // 保存用户消息到数据库（包含文件信息和完整内容）
     await db.messages.add({
       sessionId: currentId,
       role: 'user',
-      content: localInput,
+      content: userContent,  // 使用包含PDF文本的完整内容
       file: uploadedFile ? {
         name: uploadedFile.name,
         type: uploadedFile.type,
