@@ -714,7 +714,7 @@ export default function Home() {
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'chat' ? (
-            <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
               {messages.length === 0 ? (
               <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-10">
                 <div className="text-center space-y-4">
