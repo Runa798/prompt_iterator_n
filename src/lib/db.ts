@@ -1,7 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 
-
-export interface ChatSession {
+export type ChatSession = {
     id?: number;
     title: string;
     previewText: string;
@@ -9,7 +8,7 @@ export interface ChatSession {
     updatedAt: Date;
 }
 
-export interface ChatMessage {
+export type ChatMessage = {
     id?: number;
     sessionId: number;
     role: 'user' | 'assistant' | 'system' | 'data';
@@ -32,7 +31,7 @@ export interface ChatMessage {
     }>;
 }
 
-export interface FavoritePrompt {
+export type FavoritePrompt = {
     id?: number;
     title: string;
     content: string;
