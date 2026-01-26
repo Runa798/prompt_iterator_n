@@ -190,7 +190,8 @@ export function SettingsDialog() {
                 apiKey,
                 baseUrl,
                 model,
-                systemPrompt: promptToUse
+                systemPrompt: promptToUse,
+                correctionModel
             })
             setCheckStatus('idle')
             // Load custom templates from localStorage
