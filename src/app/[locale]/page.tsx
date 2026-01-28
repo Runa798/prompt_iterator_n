@@ -58,6 +58,11 @@ export default function Home() {
   // 文件上传状态 - 支持多文件
   const [uploadedFiles, setUploadedFiles] = useState<Array<{ file: File; preview?: string; text?: string }>>([])
 
+  // 拖拽上传状态 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+  const [showFullDropZone, setShowFullDropZone] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragCounterRef = useRef(0)
+
   // 不再限制模型识图，统一允许上传并提醒用户
   const modelSupportsVision = true // 允许所有模型上传图片，由用户判断
 
@@ -72,6 +77,47 @@ export default function Home() {
         console.log('Component unmounting, aborting request')
         abortControllerRef.current.abort()
       }
+    }
+  }, [])
+
+  // 全局拖拽监听 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+  useEffect(() => {
+    const handleGlobalDragEnter = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current++
+      if (dragCounterRef.current === 1) {
+        setShowFullDropZone(true)
+      }
+    }
+
+    const handleGlobalDragLeave = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current--
+      if (dragCounterRef.current === 0) {
+        setShowFullDropZone(false)
+      }
+    }
+
+    const handleGlobalDragOver = (e: DragEvent) => {
+      e.preventDefault()
+    }
+
+    const handleGlobalDrop = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current = 0
+      setShowFullDropZone(false)
+    }
+
+    window.addEventListener('dragenter', handleGlobalDragEnter)
+    window.addEventListener('dragleave', handleGlobalDragLeave)
+    window.addEventListener('dragover', handleGlobalDragOver)
+    window.addEventListener('drop', handleGlobalDrop)
+
+    return () => {
+      window.removeEventListener('dragenter', handleGlobalDragEnter)
+      window.removeEventListener('dragleave', handleGlobalDragLeave)
+      window.removeEventListener('dragover', handleGlobalDragOver)
+      window.removeEventListener('drop', handleGlobalDrop)
     }
   }, [])
 
@@ -641,6 +687,30 @@ export default function Home() {
 
   const handleFileRemove = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // 拖拽处理函数 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragging(false)
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    setShowFullDropZone(false)
+    dragCounterRef.current = 0
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        await handleFileSelect(files[i])
+      }
+    }
   }
 
   const handleCopy = (content: string) => {
@@ -1233,7 +1303,7 @@ export default function Home() {
         {activeTab === 'chat' && (
         <div className="p-4 bg-background border-t shrink-0">
           <div className="max-w-3xl mx-auto">
-            {/* 文件展示区 - 独立在输入框上方 */}
+            {/* 文件列表 - 独立显示在上方 - 由傲娇大小姐哈雷酱优化 (￣▽￣)／ */}
             {uploadedFiles.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border">
                 {uploadedFiles.map((item, index) => (
@@ -1269,15 +1339,16 @@ export default function Home() {
               </div>
             )}
 
+            {/* 输入框区域：上传按钮 + 输入框 + 发送按钮 */}
             <form
               onSubmit={onFormSubmit}
               className="relative flex items-end gap-2 p-2 rounded-xl border bg-muted/40 hover:border-primary/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all"
             >
-              {/* 文件上传按钮 */}
+              {/* 上传按钮 - 左侧 */}
               <div className="mb-1 ml-1">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   className="h-10 w-10 shrink-0"
                   onClick={() => document.getElementById('file-input')?.click()}
@@ -1289,7 +1360,7 @@ export default function Home() {
                   id="file-input"
                   type="file"
                   className="hidden"
-                  accept="image/*,.pdf,.docx"
+                  accept="image/*,.pdf,.docx,.txt,.md"
                   multiple
                   onChange={async (e) => {
                     const files = e.target.files
@@ -1301,6 +1372,8 @@ export default function Home() {
                   }}
                 />
               </div>
+
+              {/* 输入框 - 中间 */}
               <AutoResizeTextarea
                 value={localInput}
                 onChange={setLocalInput}
@@ -1310,6 +1383,8 @@ export default function Home() {
                 disabled={isLoading}
                 autoFocus
               />
+
+              {/* 发送/停止按钮 - 右侧 */}
               <Button
                 type="submit"
                 size="icon"
@@ -1337,6 +1412,34 @@ export default function Home() {
         </div>
         )}
       </div>
+
+      {/* 全屏拖拽上传区域 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／ */}
+      {showFullDropZone && (
+        <div
+          className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className="max-w-2xl w-full mx-4">
+            <div className={`border-4 border-dashed rounded-2xl p-12 text-center transition-all ${
+              isDragging ? 'border-primary bg-primary/10 scale-105' : 'border-primary/50 bg-primary/5'
+            }`}>
+              <Upload className="w-16 h-16 mx-auto mb-4 text-primary animate-bounce" />
+              <h3 className="text-2xl font-bold mb-2">{t('fileUploadComponent.dropToUpload')}</h3>
+              <p className="text-muted-foreground mb-4">
+                {t('fileUploadComponent.supportedFormats')}
+              </p>
+              {!modelSupportsVision && (
+                <div className="flex items-center justify-center gap-2 text-amber-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">{t('fileUploadComponent.modelNotSupported')}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Spotlight 搜索 */}
       <SpotlightSearch

@@ -526,12 +526,15 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                             </div>
                         </TabsContent>
 
-                        {/* 高级设置标签页 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／ */}
+                        {/* 高级设置标签页 - 由傲娇大小姐哈雷酱优化 (￣▽￣)／ */}
                         <TabsContent value="advanced" className="space-y-6 mt-0">
                             <div className="space-y-6">
-                                {/* 格式矫正模型 */}
-                                <div className="space-y-2">
-                                    <Label>{t('settings.correctionModel')}</Label>
+                                {/* 格式矫正模型 - 卡片样式 */}
+                                <div className="p-4 bg-muted/30 rounded-lg border space-y-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-sm font-semibold">{t('settings.correctionModel')}</Label>
+                                        <p className="text-xs text-muted-foreground">{t('settings.correctionModelHint')}</p>
+                                    </div>
                                     <div className="flex gap-2">
                                         <div className="flex-1 relative">
                                             <Input
@@ -554,7 +557,6 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                                             </Select>
                                         )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">{t('settings.correctionModelHint')}</p>
                                 </div>
 
                                 {/* 自动重试配置 */}
@@ -590,11 +592,14 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                                     )}
                                 </div>
 
-                                {/* 主题选择器 */}
-                                <div className="space-y-2">
-                                    <Label>{t('settings.theme')}</Label>
+                                {/* 主题选择器 - 卡片样式 */}
+                                <div className="p-4 bg-muted/30 rounded-lg border space-y-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-sm font-semibold">{t('settings.theme')}</Label>
+                                        <p className="text-xs text-muted-foreground">选择您喜欢的主题外观</p>
+                                    </div>
                                     <Select value={theme} onValueChange={setTheme}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>

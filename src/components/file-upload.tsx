@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
+import { ImagePreview } from '@/components/image-preview'
 
 interface FileUploadProps {
   onFileSelect: (file: File, preview?: string) => void
@@ -86,6 +87,7 @@ export function FileUpload({
     const isImage = file.type.startsWith('image/')
     const isPDF = file.type === 'application/pdf'
     const isDoc = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    const isText = file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md')
 
     // 检查图片支持
     if (isImage && !modelSupportsVision) {
@@ -94,7 +96,7 @@ export function FileUpload({
     }
 
     // 检查文件类型
-    if (!isImage && !isPDF && !isDoc) {
+    if (!isImage && !isPDF && !isDoc && !isText) {
       toast.error(t('fileUploadComponent.unsupportedFormat'))
       return
     }
@@ -171,33 +173,25 @@ export function FileUpload({
         </div>
       )}
 
-      {/* 常规上传区域 */}
-      <div className="relative flex items-center gap-2">
-        {/* 上传按钮 */}
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 shrink-0"
-          onClick={() => fileInputRef.current?.click()}
-          title={t('fileUploadComponent.uploadFile')}
-        >
-          <Upload className="w-4 h-4" />
-        </Button>
-
-        {/* 文件列表 */}
+      {/* 常规上传区域 - 由傲娇大小姐哈雷酱重新设计 (￣▽￣)／ */}
+      <div className="space-y-3">
+        {/* 文件列表 - 独立显示在上方 */}
         {currentFiles.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border">
             {currentFiles.map((item, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-lg border">
+              <div key={index} className="flex items-center gap-2 p-2 bg-background rounded-lg border shadow-sm">
                 {item.preview ? (
-                  <img src={item.preview} alt="Preview" className="w-10 h-10 object-cover rounded" />
+                  <ImagePreview
+                    src={item.preview}
+                    alt={item.file.name}
+                    className="w-12 h-12 object-cover rounded"
+                  />
                 ) : (
-                  <div className="w-10 h-10 bg-muted-foreground/10 rounded flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-12 h-12 bg-muted-foreground/10 rounded flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-muted-foreground" />
                   </div>
                 )}
-                <div className="flex-1 min-w-0 max-w-[120px]">
+                <div className="flex-1 min-w-0 max-w-[150px]">
                   <p className="text-xs font-medium truncate">{item.file.name}</p>
                   <p className="text-[10px] text-muted-foreground">
                     {(item.file.size / 1024).toFixed(1)} KB
@@ -207,7 +201,7 @@ export function FileUpload({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 shrink-0"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => onFileRemove(index)}
                 >
                   <X className="w-3 h-3" />
@@ -217,14 +211,28 @@ export function FileUpload({
           </div>
         )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          accept="image/*,.pdf,.docx"
-          multiple
-          onChange={handleFileChange}
-        />
+        {/* 上传按钮 - 单独一行 */}
+        <div className="relative">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+            title={t('fileUploadComponent.uploadFile')}
+          >
+            <Upload className="w-4 h-4" />
+          </Button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,.pdf,.docx,.txt,.md"
+            multiple
+            onChange={handleFileChange}
+          />
+        </div>
       </div>
     </>
   )

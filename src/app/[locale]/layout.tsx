@@ -25,7 +25,6 @@ export default async function LocaleLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           <NextIntlClientProvider messages={messages}>
             {children}
