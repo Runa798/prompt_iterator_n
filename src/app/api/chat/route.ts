@@ -3,7 +3,8 @@ import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { validateToolCall, correctFormat } from '@/lib/format-validator';
 
-export const maxDuration = 10; // Vercel Hobby plan limit
+export const runtime = 'edge'; // Edge Runtime: no 10s timeout for streaming
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
     let body;
