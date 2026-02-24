@@ -3,7 +3,7 @@ import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { validateToolCall, correctFormat } from '@/lib/format-validator';
 
-export const maxDuration = 30;
+export const maxDuration = 10; // Vercel Hobby plan limit
 
 export async function POST(req: Request) {
     let body;
