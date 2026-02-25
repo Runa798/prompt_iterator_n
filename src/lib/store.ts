@@ -34,7 +34,7 @@ interface ResolvedEndpointConfig extends EndpointConfig {
 }
 
 // 为特定模型指定固定 endpoint，未命中的模型继续使用用户在设置中的 baseUrl/apiKey。
-const MODEL_ENDPOINTS: Record<string, EndpointConfig> = {
+export const MODEL_ENDPOINTS: Record<string, EndpointConfig> = {
   'gemini-3.1-pro-preview': {
     baseUrl: 'https://undyapi.com/v1',
     apiKey: 'sk-FO6MIy3cqNwzYj5hUh5STYtTMrfHlZGywn4kV4Auxe0bGoyE',

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare, Upload, X, RotateCcw, AlertCircle } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
+import { getModelEndpointConfig, useAppStore } from '@/lib/store'
 import { ChatSidebar } from '@/components/chat-sidebar'
 import { db } from '@/lib/db'
 import { useState } from 'react'
@@ -256,9 +256,12 @@ export default function Home() {
     e.preventDefault()
     if (!localInput.trim()) return
 
+    // 按当前模型选择 endpoint；未命中预设时，回退到设置页中的配置。
+    const endpointConfig = getModelEndpointConfig(model, { baseUrl, apiKey })
+
     // 检查 API Key 是否配置（KISS原则 - 简洁至上！）
     const defaultApiKey = 'sk-Mdj54E4QkE5dQi6jV4TUli6kEN4fsPQKuIjchrBl6hIjvws1'
-    if (!apiKey || apiKey === defaultApiKey) {
+    if (!endpointConfig.apiKey || (!endpointConfig.isModelPreset && endpointConfig.apiKey === defaultApiKey)) {
       setApiKeyDialogOpen(true)
       return
     }
@@ -359,8 +362,8 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'x-base-url': baseUrl
+          'x-api-key': endpointConfig.apiKey,
+          'x-base-url': endpointConfig.baseUrl
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
@@ -793,13 +796,15 @@ export default function Home() {
     setMessages(prev => [...prev, aiMessage])
 
     // 发送 API 请求
+    const endpointConfig = getModelEndpointConfig(model, { baseUrl, apiKey })
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'x-base-url': baseUrl
+          'x-api-key': endpointConfig.apiKey,
+          'x-base-url': endpointConfig.baseUrl
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
