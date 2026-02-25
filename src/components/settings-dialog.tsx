@@ -269,7 +269,7 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
         }
     }
 
-    const applyPreset = (type: 'deepseek' | 'openai' | 'demo') => {
+    const applyPreset = (type: 'deepseek' | 'openai' | 'rightcode' | 'demo') => {
         let newConfig = { ...localConfig }
         if (type === 'deepseek') {
             newConfig = {
@@ -284,6 +284,13 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                 baseUrl: 'https://api.openai.com/v1',
                 apiKey: '',
                 model: 'gpt-4-turbo'
+            }
+        } else if (type === 'rightcode') {
+            newConfig = {
+                ...newConfig,
+                baseUrl: 'https://right.codes/claude-aws',
+                apiKey: '',
+                model: 'claude-sonnet-4-6'
             }
         } else if (type === 'demo') {
             newConfig = {
@@ -458,6 +465,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={loadTestConfig} className="flex-1">
                                     {t('settings.testPreset')}
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('rightcode')} className="flex-1">
+                                    RightCode Claude
                                 </Button>
                             </div>
 
