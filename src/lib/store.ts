@@ -39,6 +39,7 @@ const defaultSettings: AppSettings = {
     // GPT-5 系列
     'gpt-5.2',
     'gpt-5.2-codex',
+    'gpt-5.3-codex',
     // OpenAI 系列
     'gpt-4o',
     'gpt-4o-mini',
@@ -49,6 +50,8 @@ const defaultSettings: AppSettings = {
     'claude-3-5-sonnet-20241022',
     'claude-3-5-haiku-20241022',
     'claude-3-opus-20240229',
+    'claude-sonnet-4-6',
+    'claude-opus-4-6',
     // 国产大模型
     'deepseek-v3.2-exp',
     'deepseek-chat',
