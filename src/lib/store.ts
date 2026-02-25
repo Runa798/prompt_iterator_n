@@ -24,6 +24,58 @@ interface AppState extends AppSettings {
   resetSettings: () => void
 }
 
+interface EndpointConfig {
+  baseUrl: string
+  apiKey: string
+}
+
+interface ResolvedEndpointConfig extends EndpointConfig {
+  isModelPreset: boolean
+}
+
+// 为特定模型指定固定 endpoint，未命中的模型继续使用用户在设置中的 baseUrl/apiKey。
+const MODEL_ENDPOINTS: Record<string, EndpointConfig> = {
+  'gemini-3.1-pro-preview': {
+    baseUrl: 'https://undyapi.com/v1',
+    apiKey: 'sk-FO6MIy3cqNwzYj5hUh5STYtTMrfHlZGywn4kV4Auxe0bGoyE',
+  },
+  'gemini-3-pro-preview': {
+    baseUrl: 'https://undyapi.com/v1',
+    apiKey: 'sk-FO6MIy3cqNwzYj5hUh5STYtTMrfHlZGywn4kV4Auxe0bGoyE',
+  },
+  'claude-sonnet-4-6': {
+    baseUrl: 'https://right.codes/claude-aws',
+    apiKey: 'sk-343543dff035434eb13b45c775ecb9c5',
+  },
+  'claude-opus-4-6': {
+    baseUrl: 'https://right.codes/claude-aws',
+    apiKey: 'sk-343543dff035434eb13b45c775ecb9c5',
+  },
+  'gpt-5.3-codex': {
+    baseUrl: 'https://right.codes/codex/v1',
+    apiKey: 'sk-343543dff035434eb13b45c775ecb9c5',
+  },
+}
+
+export function getModelEndpointConfig(
+  model: string,
+  fallback: EndpointConfig
+): ResolvedEndpointConfig {
+  const endpoint = MODEL_ENDPOINTS[model]
+  if (endpoint) {
+    return {
+      ...endpoint,
+      isModelPreset: true,
+    }
+  }
+
+  return {
+    baseUrl: fallback.baseUrl,
+    apiKey: fallback.apiKey,
+    isModelPreset: false,
+  }
+}
+
 const defaultSettings: AppSettings = {
   apiKey: 'sk-FO6MIy3cqNwzYj5hUh5STYtTMrfHlZGywn4kV4Auxe0bGoyE',
   baseUrl: 'https://undyapi.com/v1',
