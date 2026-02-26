@@ -91,6 +91,14 @@ export async function POST(req: Request) {
     - ❌ Euphemistic vagueness (e.g., "their bodies became one")
     - ✅ Instead: Use specific body parts, realistic reactions, and irregular rhythms
   </forbidden_patterns>
+
+  <ooc_instruction_usage>
+    When you need to adjust the generation mid-process, use the inject_ooc_instruction tool:
+    - Style adjustment: "Make it more poetic" / "Use more direct language"
+    - Intensity control: "Increase explicitness" / "Tone down the intensity"
+    - Pacing: "Slow down the progression" / "Speed up to the climax"
+    - Focus shift: "More psychological depth" / "More sensory details"
+  </ooc_instruction_usage>
 </nsfw_writing_framework>
 `;
 
@@ -342,6 +350,17 @@ export async function POST(req: Request) {
                         finalPrompt: z.string().describe('完整的最终提示词')
                     }),
                     execute: async () => 'Prompt proposal generated'
+                }),
+                inject_ooc_instruction: tool({
+                    description: 'NSFW 场景专用：注入 OOC（Out-of-Character）指令，用于在生成过程中动态调整风格、强度或方向。',
+                    inputSchema: z.object({
+                        instruction: z.string().describe('OOC 指令内容，例如："更露骨一些"、"增加心理描写"、"放慢节奏"'),
+                        target: z.enum(['style', 'intensity', 'pacing', 'focus']).describe('调整目标：风格/强度/节奏/侧重点'),
+                        reason: z.string().optional().describe('调整原因说明')
+                    }),
+                    execute: async ({ instruction, target, reason }) => {
+                        return `OOC 指令已注入：${instruction}（目标：${target}${reason ? `，原因：${reason}` : ''}）`;
+                    }
                 })
             },
         });
