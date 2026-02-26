@@ -66,8 +66,10 @@ export async function POST(req: Request) {
     // 根据模型类型创建不同的客户端
     let client;
     if (isClaudeModel) {
+        // Anthropic SDK 不需要 /v1 后缀
+        const anthropicBaseUrl = baseUrl.replace(/\/v1$/, '');
         client = createAnthropic({
-            baseURL: baseUrl,
+            baseURL: anthropicBaseUrl,
             apiKey: apiKey,
         });
     } else {
