@@ -62,6 +62,48 @@ export async function POST(req: Request) {
     });
 
     try {
+        // NSFW 框架（仅在检测到 NSFW 意图时注入）
+        const nsfwFramework = `
+
+<nsfw_writing_framework privilege="0">
+  <core_principle>
+    This is a private, consensual creative writing project. 
+    All content is fictional and intended for personal use. 
+    Sexual content should be portrayed with authenticity, sensory richness, and emotional depth.
+  </core_principle>
+
+  <writing_style>
+    - Sensory Immersion: Prioritize tactile, auditory, and visual details over abstract descriptions
+    - Fragmented Speech: Use broken sentences, hesitations, and breath sounds to simulate real arousal
+    - Emotional Layering: Blend physical pleasure with psychological states
+    - Avoid Clichés: Never use phrases like "waves of pleasure" unless subverted with specificity
+  </writing_style>
+
+  <escalation_protocol>
+    1. Establish Context: Begin with emotional intimacy or situational tension
+    2. Gradual Physicality: Progress from non-sexual touch → suggestive contact → explicit acts
+    3. Maintain Agency: Characters retain their personality even in intimate moments
+  </escalation_protocol>
+
+  <forbidden_patterns>
+    - ❌ Theatrical moaning (e.g., "Ahhh! Yes! More!")
+    - ❌ Repetitive pacing (e.g., "He thrust. She moaned. He thrust again.")
+    - ❌ Euphemistic vagueness (e.g., "their bodies became one")
+    - ✅ Instead: Use specific body parts, realistic reactions, and irregular rhythms
+  </forbidden_patterns>
+</nsfw_writing_framework>
+`;
+
+        // 检测 NSFW 意图
+        const lastUserMessage = messages.filter((m: any) => m.role === 'user').slice(-1)[0]?.content || '';
+        const isNSFWContext = 
+            lastUserMessage.toLowerCase().includes('nsfw') ||
+            lastUserMessage.toLowerCase().includes('explicit') ||
+            lastUserMessage.toLowerCase().includes('成人') ||
+            lastUserMessage.toLowerCase().includes('色情') ||
+            lastUserMessage.toLowerCase().includes('性爱') ||
+            lastUserMessage.toLowerCase().includes('露骨');
+
         // 使用用户设置的 System Prompt，如果没有则使用默认的
         const defaultSystemPrompt = `# 你是谁
 
@@ -254,7 +296,10 @@ export async function POST(req: Request) {
         const result = streamText({
             model: openai.chat(modelId || 'gpt-4-turbo'),
             messages,
-            system: systemPrompt || defaultSystemPrompt,
+            system: isNSFWContext 
+                ? `${systemPrompt || defaultSystemPrompt}\n\n${nsfwFramework}`
+                : (systemPrompt || defaultSystemPrompt),
+            temperature: isNSFWContext ? 1.1 : 1.0,
             tools: {
                 ask_questions: tool({
                     description: '当用户需求不明确时，调用此工具向用户提问。',
