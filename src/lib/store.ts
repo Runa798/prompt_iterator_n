@@ -44,11 +44,11 @@ export const MODEL_ENDPOINTS: Record<string, EndpointConfig> = {
     apiKey: 'sk-FO6MIy3cqNwzYj5hUh5STYtTMrfHlZGywn4kV4Auxe0bGoyE',
   },
   'claude-sonnet-4-6': {
-    baseUrl: 'https://right.codes/claude-aws',
+    baseUrl: 'https://right.codes/claude-aws/v1',
     apiKey: 'sk-343543dff035434eb13b45c775ecb9c5',
   },
   'claude-opus-4-6': {
-    baseUrl: 'https://right.codes/claude-aws',
+    baseUrl: 'https://right.codes/claude-aws/v1',
     apiKey: 'sk-343543dff035434eb13b45c775ecb9c5',
   },
   'gpt-5.3-codex': {
