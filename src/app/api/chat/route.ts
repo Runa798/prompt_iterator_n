@@ -1,5 +1,4 @@
 import { createOpenAI } from '@ai-sdk/openai';
-import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { validateToolCall, correctFormat } from '@/lib/format-validator';
@@ -57,27 +56,10 @@ export async function POST(req: Request) {
         return new Response('Configuration Error: Missing API Key. Please configure it in Settings.', { status: 401 });
     }
 
-    // 检测是否是 Claude 模型
-    const isClaudeModel = modelId && (
-        modelId.includes('claude') || 
-        modelId.startsWith('claude-')
-    );
-
-    // 根据模型类型创建不同的客户端
-    let client;
-    if (isClaudeModel) {
-        // Anthropic SDK 不需要 /v1 后缀
-        const anthropicBaseUrl = baseUrl.replace(/\/v1$/, '');
-        client = createAnthropic({
-            baseURL: anthropicBaseUrl,
-            apiKey: apiKey,
-        });
-    } else {
-        client = createOpenAI({
-            baseURL: baseUrl,
-            apiKey: apiKey,
-        });
-    }
+    const openai = createOpenAI({
+        baseURL: baseUrl,
+        apiKey: apiKey,
+    });
 
     try {
         // 使用用户设置的 System Prompt，如果没有则使用默认的
@@ -270,7 +252,7 @@ export async function POST(req: Request) {
 **记住**：你的价值在于生成结构化的交互式表格，而不是文字说明。`;
 
         const result = streamText({
-            model: isClaudeModel ? client(modelId || 'claude-3-5-sonnet-20241022') : client.chat(modelId || 'gpt-4-turbo'),
+            model: openai.chat(modelId || 'gpt-4-turbo'),
             messages,
             system: systemPrompt || defaultSystemPrompt,
             tools: {
