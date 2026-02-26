@@ -38,7 +38,9 @@ const TEST_CONFIG = {
     systemPrompt: '你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。你应该主动提出建议，使用Checkbox等形式让用户选择。',
     correctionModel: 'grok-beta-fast',
     autoRetry: true,
-    maxRetries: 3
+    maxRetries: 3,
+    nsfwMode: false,
+    nsfwLevel: 'explicit' as const
 }
 
 const DEFAULT_SYSTEM_PROMPT_ZH = `你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。
