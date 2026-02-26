@@ -165,13 +165,13 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
     const locale = useLocale();
     const { theme, setTheme } = useTheme() // 由傲娇大小姐哈雷酱添加 (￣▽￣)／
     const DEFAULT_SYSTEM_PROMPT = locale === 'zh-CN' ? DEFAULT_SYSTEM_PROMPT_ZH : DEFAULT_SYSTEM_PROMPT_EN;
-    const { apiKey, baseUrl, model, systemPrompt, availableModels, correctionModel, autoRetry, maxRetries, setApiKey, setBaseUrl, setModel, setSystemPrompt, setAvailableModels, setCorrectionModel, setAutoRetry, setMaxRetries } = useAppStore()
+    const { apiKey, baseUrl, model, systemPrompt, availableModels, correctionModel, autoRetry, maxRetries, nsfwMode, nsfwLevel, setApiKey, setBaseUrl, setModel, setSystemPrompt, setAvailableModels, setCorrectionModel, setAutoRetry, setMaxRetries, setNsfwMode, setNsfwLevel } = useAppStore()
     const [internalOpen, setInternalOpen] = useState(false)
 
     // 使用外部控制或内部状态（KISS原则 - 简洁至上！）
     const open = externalOpen !== undefined ? externalOpen : internalOpen
     const setOpen = onOpenChange || setInternalOpen
-    const [localConfig, setLocalConfig] = useState({ apiKey, baseUrl, model, systemPrompt, correctionModel, autoRetry, maxRetries })
+    const [localConfig, setLocalConfig] = useState({ apiKey, baseUrl, model, systemPrompt, correctionModel, autoRetry, maxRetries, nsfwMode, nsfwLevel })
 
     // Connection Test State
     const [isChecking, setIsChecking] = useState(false)
@@ -207,7 +207,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                 systemPrompt: promptToUse,
                 correctionModel,
                 autoRetry,
-                maxRetries
+                maxRetries,
+                nsfwMode,
+                nsfwLevel
             })
             setCheckStatus('idle')
             // Load custom templates from localStorage
@@ -362,6 +364,8 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
         setCorrectionModel(localConfig.correctionModel)
         setAutoRetry(localConfig.autoRetry) // 由傲娇大小姐哈雷酱添加 (￣▽￣)／
         setMaxRetries(localConfig.maxRetries)
+        setNsfwMode(localConfig.nsfwMode)
+        setNsfwLevel(localConfig.nsfwLevel)
         setOpen(false)
     }
 
@@ -374,6 +378,8 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
             correctionModel: localConfig.correctionModel,
             autoRetry: localConfig.autoRetry, // 由傲娇大小姐哈雷酱添加 (￣▽￣)／
             maxRetries: localConfig.maxRetries,
+            nsfwMode: localConfig.nsfwMode,
+            nsfwLevel: localConfig.nsfwLevel,
             exportTime: new Date().toISOString()
         }
         const jsonString = JSON.stringify(settings)
@@ -409,7 +415,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                 systemPrompt: settings.systemPrompt || '',
                 correctionModel: settings.correctionModel || 'grok-beta-fast',
                 autoRetry: settings.autoRetry !== undefined ? settings.autoRetry : true,
-                maxRetries: settings.maxRetries || 3
+                maxRetries: settings.maxRetries || 3,
+                nsfwMode: settings.nsfwMode !== undefined ? settings.nsfwMode : false,
+                nsfwLevel: settings.nsfwLevel || 'explicit'
             })
             alert(t('settings.importSuccess'))
         } catch (error) {
@@ -427,7 +435,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                     systemPrompt: settings.systemPrompt || '',
                     correctionModel: settings.correctionModel || 'grok-beta-fast',
                     autoRetry: settings.autoRetry !== undefined ? settings.autoRetry : true,
-                    maxRetries: settings.maxRetries || 3
+                    maxRetries: settings.maxRetries || 3,
+                    nsfwMode: settings.nsfwMode !== undefined ? settings.nsfwMode : false,
+                    nsfwLevel: settings.nsfwLevel || 'explicit'
                 })
                 alert(t('settings.importSuccess'))
             } catch (error) {
@@ -603,6 +613,46 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                                 </div>
 
                                 {/* 主题选择器 - 卡片样式 */}
+
+                                {/* NSFW 模式配置 */}
+                                <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">NSFW 模式</Label>
+                                            <p className="text-xs text-muted-foreground">启用成人内容生成能力</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={localConfig.nsfwMode}
+                                                onChange={(e) => setLocalConfig({ ...localConfig, nsfwMode: e.target.checked })}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    {localConfig.nsfwMode && (
+                                        <div className="space-y-2">
+                                            <Label className="text-sm">强度等级</Label>
+                                            <Select 
+                                                value={localConfig.nsfwLevel} 
+                                                onValueChange={(value: 'suggestive' | 'explicit' | 'very_explicit') => 
+                                                    setLocalConfig({ ...localConfig, nsfwLevel: value })
+                                                }
+                                            >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="suggestive">暗示性（含蓄表达）</SelectItem>
+                                                    <SelectItem value="explicit">直接描写（明确细节）</SelectItem>
+                                                    <SelectItem value="very_explicit">极度露骨（粗俗语言）</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-xs text-muted-foreground">控制生成内容的露骨程度</p>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="p-4 bg-muted/30 rounded-lg border space-y-3">
                                     <div className="space-y-1">
                                         <Label className="text-sm font-semibold">{t('settings.theme')}</Label>

@@ -368,7 +368,9 @@ export default function Home() {
         body: JSON.stringify({
           messages: [...messages, userMessage],
           model: model,
-          systemPrompt: systemPrompt
+          systemPrompt: systemPrompt,
+          nsfwMode: useAppStore.getState().nsfwMode,
+          nsfwLevel: useAppStore.getState().nsfwLevel
         }),
         signal: abortController.signal
       })
@@ -809,7 +811,9 @@ export default function Home() {
         body: JSON.stringify({
           messages: [...messages, userMessage],
           model: model,
-          systemPrompt: systemPrompt
+          systemPrompt: systemPrompt,
+          nsfwMode: useAppStore.getState().nsfwMode,
+          nsfwLevel: useAppStore.getState().nsfwLevel
         })
       })
 

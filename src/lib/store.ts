@@ -10,6 +10,8 @@ interface AppSettings {
   correctionModel: string
   autoRetry: boolean // 自动重试配置 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
   maxRetries: number // 最大重试次数
+  nsfwMode: boolean // NSFW 模式开关
+  nsfwLevel: 'suggestive' | 'explicit' | 'very_explicit' // NSFW 强度等级
 }
 
 interface AppState extends AppSettings {
@@ -21,6 +23,8 @@ interface AppState extends AppSettings {
   setCorrectionModel: (model: string) => void
   setAutoRetry: (enabled: boolean) => void // 设置自动重试
   setMaxRetries: (count: number) => void // 设置最大重试次数
+  setNsfwMode: (enabled: boolean) => void // 设置 NSFW 模式
+  setNsfwLevel: (level: 'suggestive' | 'explicit' | 'very_explicit') => void // 设置 NSFW 强度
   resetSettings: () => void
 }
 
@@ -83,6 +87,8 @@ const defaultSettings: AppSettings = {
   correctionModel: 'gemini-3-flash-preview',
   autoRetry: true, // 默认启用自动重试 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
   maxRetries: 3, // 默认最多重试3次
+  nsfwMode: false, // 默认关闭 NSFW 模式
+  nsfwLevel: 'explicit', // 默认强度：直接描写
   systemPrompt: '你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。\n\n重要提示：\n1. 当用户上传图片时，请仔细分析图片内容，并结合用户的文字描述来理解他们的真实需求\n2. 当用户上传文档（PDF/DOCX）时，文档内容会以文本形式提供，请根据文档内容和用户的指令来优化提示词\n3. 你应该主动提出建议，使用交互式表单让用户选择优化方向',
   availableModels: [
     // Gemini 系列 (UndyAPI - 支持 NSFW)
@@ -130,6 +136,8 @@ export const useAppStore = create<AppState>()(
       setCorrectionModel: (correctionModel) => set({ correctionModel }),
       setAutoRetry: (autoRetry) => set({ autoRetry }), // 由傲娇大小姐哈雷酱添加 (￣▽￣)／
       setMaxRetries: (maxRetries) => set({ maxRetries }),
+      setNsfwMode: (nsfwMode) => set({ nsfwMode }),
+      setNsfwLevel: (nsfwLevel) => set({ nsfwLevel }),
       resetSettings: () => set(defaultSettings),
     }),
     {

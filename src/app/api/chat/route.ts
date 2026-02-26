@@ -14,7 +14,7 @@ export async function POST(req: Request) {
         return new Response('Invalid JSON in request body', { status: 400 });
     }
 
-    const { messages, model: modelId, systemPrompt } = body;
+    const { messages, model: modelId, systemPrompt, nsfwMode, nsfwLevel } = body;
 
     if (!messages || !Array.isArray(messages)) {
         return new Response('Missing or invalid messages array', { status: 400 });
@@ -102,15 +102,9 @@ export async function POST(req: Request) {
 </nsfw_writing_framework>
 `;
 
-        // 检测 NSFW 意图
-        const lastUserMessage = messages.filter((m: any) => m.role === 'user').slice(-1)[0]?.content || '';
-        const isNSFWContext = 
-            lastUserMessage.toLowerCase().includes('nsfw') ||
-            lastUserMessage.toLowerCase().includes('explicit') ||
-            lastUserMessage.toLowerCase().includes('成人') ||
-            lastUserMessage.toLowerCase().includes('色情') ||
-            lastUserMessage.toLowerCase().includes('性爱') ||
-            lastUserMessage.toLowerCase().includes('露骨');
+        // 使用前端配置决定是否启用 NSFW 模式
+        const isNSFWContext = nsfwMode === true;
+        const nsfwIntensity = nsfwLevel || 'explicit';
 
         // 使用用户设置的 System Prompt，如果没有则使用默认的
         const defaultSystemPrompt = `# 你是谁
